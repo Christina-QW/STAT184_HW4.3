@@ -20,8 +20,9 @@ Goals, Needs, and Steps for the calcium dataset and the GitHub are provided in t
 This repository contains the following files:
 1. README.md: Introduces the project, data sources, and repository organization.
 2. STAT184 HW4.3.qmd: The Quarto source file containing the analysis, code, and explanations.
-3. STAT184-HW4.3 (2).pdf: The rendered PDF report for HW 4.3.
-4. PLAN.md: The project and repository plan, including Goals, Needs, and Steps.
+3. STAT184-HW4.3 (2).pdf: The original PDF submitted for HW 4.3.
+4. STAT184-HW4.3_final.pdf: The updated PDF with an automatically generated Code Appendix.
+5. PLAN.md: The project and repository plan, including Goals, Needs, and Steps.
 The repository uses two branches, one is main and the other is dev_QW.
 ## Contact Information
 Author: Qiyue Wang
