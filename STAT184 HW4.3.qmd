@@ -3,12 +3,17 @@ title: "STAT 184 HW4.3"
 author: "Qiyue Wang"
 date: "2026-11-16"
 format: pdf
+execute:
+  echo: false
+  warning: false
+  message: false
 ---
 
 
 ```{r}
 #| label: setup
 #| include: false
+# I use the tidyverse style guide for my R code.
 library(tidyverse)
 library(knitr)
 
@@ -217,6 +222,7 @@ exact_integral <- pchisq(20, df = 5) - pchisq(0, df = 5)
 ```{r}
 #| label: fig-mc-multiple
 #| fig-cap: "Monte Carlo Numerical Integration"
+#| fig-alt: "Four Monte Carlo plots using 10, 100, 1,000, and 10,000 random points to estimate an integral."
 #| fig-subcap:
 #|   - "10 random points"
 #|   - "100 random points"
@@ -637,198 +643,14 @@ RStudio script following your plan
 
 Final verification: All 31 women and 124 valid measurements were retained, no valid numerical values were changed, and the final graph meets your requested structure.
 
-# Appendix B: Code Appendix
+{{< pagebreak >}}
+
+# Code Appendix
 
 ```{r}
-#| label: appendix-diamonds
+#| label: codeAppend
+#| ref-label: !expr knitr::all_labels()
+#| echo: true
 #| eval: false
 
-library(tidyverse)
-library(knitr)
-
-# Keep diamonds with positive physical dimensions.
-data(diamonds)
-newDiamonds <- diamonds |>
-  filter(x > 0, y > 0, z > 0) |>
-  select(cut, x, y, z)
-
-# Calculate descriptive statistics.
-targetStats <- function(dataVector) {
-  c(
-    Freq. = length(dataVector),
-    `0%` = unname(quantile(dataVector, probs = 0)),
-    `20%` = unname(quantile(dataVector, probs = 0.20)),
-    `40%` = unname(quantile(dataVector, probs = 0.40)),
-    `60%` = unname(quantile(dataVector, probs = 0.60)),
-    `80%` = unname(quantile(dataVector, probs = 0.80)),
-    `100%` = unname(quantile(dataVector, probs = 1)),
-    Med. = median(dataVector),
-    Mean = mean(dataVector),
-    SD = sd(dataVector)
-  )
-}
-
-# Calculate statistics for each cut category.
-cutStats <- function(cutName) {
-  cutData <- newDiamonds |>
-    filter(cut == cutName)
-
-  cutVals <- sapply(
-    X = c("x", "y", "z"),
-    FUN = function(x) targetStats(cutData[[x]])
-  )
-
-  as.data.frame(cutVals) |>
-    mutate(stat = names(targetStats(c(1, 2, 3))), .before = 1) |>
-    pivot_longer(
-      cols = c("x", "y", "z"),
-      names_to = "Variable",
-      values_to = "value"
-    ) |>
-    pivot_wider(names_from = stat, values_from = value) |>
-    mutate(Cut = cutName, .before = 1)
-}
-
-# Combine the five cut categories.
-cutNames <- c("Fair", "Good", "Very Good", "Premium", "Ideal")
-statVals <- bind_rows(sapply(cutNames, cutStats, simplify = FALSE))
-
-# Create separate tables for length, width, and height.
-lengthVals <- statVals |>
-  filter(Variable == "x") |>
-  select(-Variable)
-
-widthVals <- statVals |>
-  filter(Variable == "y") |>
-  select(-Variable)
-
-heightVals <- statVals |>
-  filter(Variable == "z") |>
-  select(-Variable)
-
-# Display the three descriptive statistics tables.
-knitr::kable(lengthVals, digits = 3,
-             row.names = FALSE, booktabs = TRUE)
-
-knitr::kable(widthVals, digits = 3,
-             row.names = FALSE, booktabs = TRUE)
-
-knitr::kable(heightVals, digits = 3,
-             row.names = FALSE, booktabs = TRUE)
 ```
-
-## Big 10 Academic Alliance
-
-```{r}
-#| label: appendix-btaa
-#| eval: false
-
-# Import the basketball dataset.
-team_box_raw <- read_csv("team_box.csv", show_col_types = FALSE)
-
-# Keep the 2026 season and the variables needed for the graph.
-team_box_clean <- team_box_raw |>
-  filter(season == 2026) |>
-  select(field_goal_pct, team_score)
-
-# Create a scatterplot of field goal percentage and points.
-ggplot(
-  data = team_box_clean,
-  mapping = aes(
-    x = field_goal_pct,
-    y = team_score
-  )
-) +
-  geom_point(
-    color = "#1E407C",
-    alpha = 0.3,
-    size = 1.5
-  ) +
-  labs(
-    title = "Field Goal Percentage and Points Scored",
-    subtitle = "NCAA Women's Basketball, 2026 Season",
-    x = "Field Goal Percentage (%)",
-    y = "Points Scored"
-  ) +
-  theme_bw()
-```
-
-## Monte Carlo Numerical Integration
-
-```{r}
-#| label: appendix-monte-carlo
-#| eval: false
-
-# Generate random points inside a rectangle.
-mc_simulate <- function(n, xMin, xMax, yMin, yMax) {
-  x <- runif(n, min = xMin, max = xMax)
-  y <- runif(n, min = yMin, max = yMax)
-  points <- data.frame(x = x, y = y)
-  return(points)
-}
-
-# Estimate the integral and create a visualization.
-mc_plot <- function(n) {
-  mc_points <- mc_simulate(n, 0, 20, 0, 0.16)
-
-  # Identify points below or above the density curve.
-  mc_points <- mc_points |>
-    mutate(flag = if_else(
-      y <= dchisq(x, df = 5),
-      "on/below",
-      "above"
-    ))
-
-  # Calculate the numerical integral.
-  rectangle_area <- 20 * 0.16
-  p <- mean(mc_points$flag == "on/below")
-  num_int <- rectangle_area * p
-
-  # Plot the sampled points and chi-square density.
-  graph <- ggplot(mc_points, aes(x = x, y = y)) +
-    geom_point(aes(color = flag), size = 1.0, alpha = 0.6) +
-    stat_function(
-      fun = dchisq,
-      args = list(df = 5),
-      color = "blue",
-      linewidth = 1
-    ) +
-    scale_color_manual(
-      values = c("above" = "red", "on/below" = "green")
-    ) +
-    labs(
-      title = paste("Monte Carlo Integration, n =", n),
-      subtitle = paste("Estimated Integral:", round(num_int, 4)),
-      x = "x",
-      y = "y",
-      color = "Point Position"
-    ) +
-    coord_cartesian(
-      xlim = c(0, 20),
-      ylim = c(0, 0.16)
-    ) +
-    theme_bw(base_size = 9) +
-    theme(legend.position = "bottom")
-
-  list(plot = graph, num_int = num_int)
-}
-
-# Use a fixed seed to reproduce the same results.
-set.seed(184)
-
-# Run simulations with four sample sizes.
-mc10 <- mc_plot(10)
-mc100 <- mc_plot(100)
-mc1000 <- mc_plot(1000)
-mc10000 <- mc_plot(10000)
-
-# Calculate the exact integral for comparison.
-exact_integral <- pchisq(20, df = 5) - pchisq(0, df = 5)
-
-# Display the four Monte Carlo graphs.
-print(mc10$plot)
-print(mc100$plot)
-print(mc1000$plot)
-print(mc10000$plot)
-```
-
